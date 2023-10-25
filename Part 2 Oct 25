@@ -1,0 +1,40 @@
+%% Part 2
+clear all
+close all
+
+load COVID_STL.mat
+
+% T = 158;
+% 
+% X = zeros(4,T);
+% X(:,1) = [1; 0; 0 ; 0];
+
+figure()
+A =
+B = zeros(4,1); %B = zeros, so Bu(t) = 0, which means there are no external inputs. state x(t) only evolves using A.
+
+x0 =  %initial state of SIRD
+
+C = eye(4);
+D = zeros(4,1);
+
+sys_sir_base = ss(A,B,eye(4),zeros(4,1),1); %OG code
+
+sys_sir_base = ss(A,B,C,D,1); 
+
+%A = initial state, B  = zeros, so x(t) only evolves with A.
+% C is a 4x4 identity matrix, and D is zero, which means that y(t), the output
+%of the system is just the current state of x(t)
+%the last ",1" means sample time 1s
+
+
+Y = lsim(sys_sir_base, zeros(1000,1), linspace(0,999,1000),  x0); % u = zeros, meaning there are no external inputs at time t
+
+plot(Y); % plot the output trajectory
+legend('S','I','R','D');
+xlabel('Time')
+ylabel('Percentage Population');
+
+plot(cases_STL)
+hold on
+plot(deaths_STL)
