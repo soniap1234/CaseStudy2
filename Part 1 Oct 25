@@ -1,0 +1,88 @@
+%% Part 1.1
+%Step 1
+T = 100
+%Number of iterations
+X = zeros(4,T);
+X(:,1) = [1; 0; 0 ; 0];
+%Initializing first
+C = [0.95 0.04 0 0; 0.05 0.85 0 0; 0 0.1 1 0; 0 0.01 0 1];
+C = [0.8 0.04 0 0; 0.20 0.85 0 0; 0 0.1 1 0; 0 0.01 0 1];  %what if we increase % susceptible-to-infected and decrease the amount susceptible-to-susceptible by 0.15
+%Coefficient Matrix for SIRD progression
+for t=1:T
+   X(:,t+1) = C*X(:,t);
+end
+%Progresses through
+itr = zeros(1,T);
+for t = 1:T;
+   itr(1,t+1) = itr(1,t)+[1];
+end
+%Sets up
+figure
+hold on
+scatter(itr, X(1,:), 'filled');
+scatter(itr, X(2,:), 'filled');
+scatter(itr, X(3,:), 'filled');
+scatter(itr, X(4,:), 'filled');
+legend('S','I', 'R', 'D')
+
+%% Part 1.2 Where Re-Infections are Possible 
+% This means that the scalars affecting the recovered population (3rd column of A)
+% will have values greater than zero in the 1st and 2nd row (recovered-to-susceptible and recovered-to-infected 
+% Then subtract that from the 1 in
+% the recovered-to-recovered spot (3,3) to make sure the final SIRD adds up
+% to 1
+
+T = 100;
+%Number of iterations
+X = zeros(4,T);
+X(:,1) = [1; 0; 0 ; 0];
+%Initializing
+C = [0.95 0.04 0.05 0; 0.05 0.85 0.05 0; 0 0.1 0.9 0; 0 0.01 0 1];  %0 --> 0.05, 1--> 0.9
+%Coefficient Matrix for SIRD progression
+for t=1:T
+   X(:,t+1) = C*X(:,t);
+end
+%Progresses through
+itr = zeros(1,T);
+for t = 1:T
+   itr(1,t+1) = itr(1,t)+[1];
+end
+%Sets up
+figure
+hold on
+scatter(itr, X(1,:), 'filled');
+scatter(itr, X(2,:), 'filled');
+scatter(itr, X(3,:), 'filled');
+scatter(itr, X(4,:), 'filled');
+legend('S','I', 'R', 'D')
+
+%result: see google doc
+
+%% Part I, number 3
+
+%base-sir-m
+
+figure()
+A = [0.95 0.04 0 0; 0.05 0.85 0 0; 0 0.1 1 0; 0 0.01 0 1];
+B = zeros(4,1);
+x0 = [0.9 0.1 0 0];  %initial state of SIRD
+
+sys_sir_base = ss(A,B,eye(4),zeros(4,1),1); %A = initial state, B  = zeros, eye(4) = 4x4 identity matrix, the last ",1" = sample time 1s
+
+Y = lsim(sys_sir_base,zeros(1000,1),linspace(0,999,1000),x0); 
+
+plot(Y); % plot the output trajectory
+legend('S','I','R','D');
+xlabel('Time')
+ylabel('Percentage Population');
+
+%Experimentation (I haven'tchanged values get, just var names)
+
+figure()
+sys_sir_base2 = ss(A,B,eye(4),zeros(4,1),1);   
+Y2 = lsim(sys_sir_base2,zeros(500,1),linspace(0,499,500),x0); 
+
+plot(Y2);
+legend('S','I','R','D');
+xlabel('Time')
+ylabel('Percentage Population');
