@@ -26,7 +26,7 @@ sys_sir_baseY = ss(A1,B,C,D,1);
 sys_sir_baseZ = ss(A2,B,C,D,1);      
 sys_sir_baseA = ss(A3,B,C,D,1);
 sys_sir_baseB = ss(A4,B,C,D,1);
-sys_sir_baseC = ss(A5,B,C,D,1);
+% sys_sir_baseC = ss(A5,B,C,D,1);
 
 
 %A = initial state, B  = zeros, so x(t) only evolves with A.
@@ -42,16 +42,16 @@ Z = lsim(sys_sir_baseZ, zeros(17,1), linspace(68,84,17), x0z);
 
     x0a = [Z(17,1), Z(17,2), Z(17,3), Z(17,4)];
 
-A = lsim(sys_sir_baseA, zeros(17,1), linspace(68,84,17), x0a);
+A = lsim(sys_sir_baseA, zeros(21,1), linspace(85,105,21), x0a);
 
-    x0b = [A(17,1), A(17,2), A(17,3), A(17,4)];
+    x0b = [A(20,1), A(20,2), A(20,3), A(20,4)];
 
-B = lsim(sys_sir_baseB, zeros(17,1), linspace(68,84,17), x0b);
+B = lsim(sys_sir_baseB, zeros(53,1), linspace(106,158,53), x0b);
 
-    x0c = [B(17,1), B(17,2), B(17,3), B(17,4)];
-
-C = lsim(sys_sir_baseC, zeros(17,1), linspace(68,84,17), x0c);
-
+%     x0c = [B(17,1), B(17,2), B(17,3), B(17,4)];
+% 
+% C1 = lsim(sys_sir_baseC, zeros(17,1), linspace(68,84,17), x0c);
+% 
 
 total = [Y;Z;A;B];
 
