@@ -1,0 +1,99 @@
+
+%% Part 2
+clear all
+close all
+
+load COVID_STL.mat
+
+for i = 1:157
+    new_cases(i) =  cases_STL(i+1)-cases_STL(i);
+    infected_percent(i) = cases_STL(i)/POP_STL;
+end 
+
+for i = 1:157
+    new_deaths(i) = deaths_STL(i+1)-deaths_STL(i);
+    deaths_percent(i) = deaths_STL(i)/POP_STL;
+end
+
+%%
+
+Q = @(x) [x(1) x(2) 0 0; x(3) x(4) 0 0; 0 x(5) 1 0; 0 x(6) 0 1];
+%Q = zeros(4,4) %[0 0 0 0; 0.05 0.85 0 0; 0 0.1 1 0; 0 0.01 0 1];
+
+%Q = [0.7 0.04 0 0; 0.05 0.85 0 0; 0 0.1 1 0; 0 0.01 0 1];
+
+x1 = [1 0 0 1 0 1];
+
+a = 0.98;
+c = 1-a;
+d = 0.75;
+e = 0.1;
+f = 0.01;
+b = 1-d-e-f;
+
+Vect = [a; b; c; d; e; f];
+
+QAttempt = feval(Q, Vect);
+
+%%
+
+B = zeros(4,1); %B = zeros, so Bu(t) = 0, which means there are no external inputs. state x(t) only evolves using A.
+
+x0 = [0.9 0.1 0 0]; %initial state of SIRD
+
+C = eye(4);
+D = zeros(4,1);
+
+%sys_sir_base = ss(A,B,eye(4),zeros(4,1),1); %OG code
+
+sys_sir_base = ss(QAttempt,B,C,D,1); 
+
+%A = initial state, B  = zeros, so x(t) only evolves with A.
+% C is a 4x4 identity matrix, and D is zero, which means that y(t), the output
+%of the system is just the current state of x(t)
+%the last ",1" means sample time 1s
+
+Y = lsim(sys_sir_base, zeros(1000,1), linspace(0,999,1000),  x0); % u = zeros, meaning there are no external inputs at time t
+%{
+figure
+hold on
+plot(Y); % plot the output trajectory
+plot(infected_percent)
+plot(deaths_percent)
+
+
+legend('S','I','R','D', 'IData%', 'DData%');
+xlabel('Time')
+ylabel('Percentage Population');
+
+xlim([0,160])
+ylim([0,0.4])
+%}
+%%
+
+y = infected_percent;
+z = deaths_percent;
+
+%lb = zeros(6,1); % All entries non-negative
+%ub = ones(6,1); % All entries less than or equal to 1
+
+
+x0 = [0.9 0.1 0 0];
+
+J = leastsquares(QAttempt, y, z, x0', 157)
+
+
+function CostVal = leastsquares(QIn, IDat, DDat, xi, n)
+
+QData(:,1) = xi;
+
+runningsum = 0;
+
+for  k = 1:(n-1) % Combine these
+    runningsum = (QData(4,k)-DDat(1,k))'*(QData(4,k)-DDat(1,k))+(QData(2,k)-IDat(1,k))'*(QData(2,k)-IDat(1,k))+ runningsum;
+    QData(:,k+1) = QIn*QData(:,k);
+end
+
+CostVal = runningsum;
+end
+
