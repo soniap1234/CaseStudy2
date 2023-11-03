@@ -1,0 +1,85 @@
+
+
+%% Part 2
+clear all
+close all
+
+load COVID_STL.mat
+load mockdata2023.mat
+
+plot(cumulativeDeaths)
+hold on 
+plot(newInfections)
+
+legend('Cumulative Deaths','New Infections')
+
+new_cases(1) = cases_STL(1);
+new_deaths(1) = cases_STL(1);
+
+for i = 1:157
+    new_cases(i+1) =  cases_STL(i+1)-cases_STL(i);
+    new_cases_percent(i) = new_cases(i)/POP_STL;
+    infected_percent(i) = cases_STL(i)/POP_STL;
+end 
+%%
+for i = 1:157
+    new_deaths(i+1) = deaths_STL(i+1)-deaths_STL(i);
+    new_deaths_percent(i) = new_deaths(i)/POP_STL;
+    deaths_percent(i) = deaths_STL(i)/POP_STL;
+end
+%%
+
+infected_percent(158) = cases_STL(158)/POP_STL;
+deaths_percent(158) = deaths_STL(158)/POP_STL;
+
+y = infected_percent;
+z = deaths_percent;
+
+%%
+
+a = 0.998;
+c = 1-a;
+d = 0.805;
+e = 0.19;
+f = 0.0005;
+b = 1-d-e-f;
+
+VI = 0.01;
+rowVV = 0.99;
+
+QAttempt = [a b 0 0; c d 0 0; 0 e 1 0; 0 f 0 1];
+VAttempt = [a b 0 0 0; c d 0 0 VI; 0 e 1 0 0; 0 f 0 1 1; 0.1 0 0 0 rowVV];
+
+vaxday = 6;
+
+x0 = [1 0 0 0];
+
+n = 158;
+
+PlotSim = VAXSIM(QAttempt, VAttempt, x0', vaxday, n);
+
+
+
+function Datas = VAXSIM(SIRDin, SIRDVin, xi, VaxDay, n)
+
+QData(:,1) = xi;
+
+for  k = 1:(VaxDay-1) % Combine these
+    QData(:,k+1) = SIRDin*QData(:,k);
+end
+
+QData = [QData; zeros(1,VaxDay)];
+
+
+for  k = VaxDay:n-1 % Combine these
+    QData(:,k+1) = SIRDVin*QData(:,k);
+end
+
+Datas = QData;
+end
+
+
+
+
+
+
