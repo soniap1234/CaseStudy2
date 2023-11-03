@@ -1,0 +1,185 @@
+
+
+%% Part 2
+clear all
+close all
+
+load COVID_STL.mat
+
+new_cases(1) = cases_STL(1);
+new_deaths(1) = cases_STL(1);
+
+for i = 1:157
+    new_cases(i+1) =  cases_STL(i+1)-cases_STL(i);
+    new_cases_percent(i) = new_cases(i)/POP_STL;
+    infected_percent(i) = cases_STL(i)/POP_STL;
+end 
+%%
+for i = 1:157
+    new_deaths(i+1) = deaths_STL(i+1)-deaths_STL(i);
+    new_deaths_percent(i) = new_deaths(i)/POP_STL;
+    deaths_percent(i) = deaths_STL(i)/POP_STL;
+end
+%%
+
+infected_percent(158) = cases_STL(158)/POP_STL;
+deaths_percent(158) = deaths_STL(158)/POP_STL;
+
+y = infected_percent;
+z = deaths_percent;
+
+%%
+
+a = 0.998;
+c = 1-a;
+d = 0.805;
+e = 0.19;
+f = 0.0005;
+b = 1-d-e-f;
+
+QAttempt = [a b 0 0; c d 0 0; 0 e 1 0; 0 f 0 1];
+
+%%
+
+x0 = [1 0 0 0];
+
+QSim = DATA(QAttempt, x0', 158);
+NewSim = NEW(QAttempt, x0', 158);
+DCumMat = DCUM(QSim, NewSim, f);
+ICumMat = ICUM(QSim, c);
+
+J = leastsquares(ICumMat, DCumMat, y, z, x0')
+
+
+%{
+figure
+hold on
+plot(ICumMat)
+plot(DCumMat(1,:))
+plot(infected_percent)
+plot(deaths_percent)
+
+legend('I','D', 'IData%', 'DData%');
+xlabel('Time')
+ylabel('Percentage Population');
+
+xlim([0,160])
+ylim([0,0.4])
+%}
+%%
+
+TravelMat = TRAVEL(158);
+TravData = QSim + TRAVEL(158);
+
+TravSimMix = MIXSIM(QAttempt, x0', 158, TravData);
+
+%%
+
+
+figure
+hold on
+plot(TravSimMix(1,:))
+plot(TravSimMix(2,:))
+plot(TravSimMix(3,:))
+plot(TravSimMix(4,:))
+
+legend('S', 'I', 'R', 'D');
+xlabel('Time')
+ylabel('Percentage Population');
+
+
+
+function CostVal = leastsquares(QIIn, QDIn, IDat, DDat, xi)
+
+runningsum = 0;
+
+for  k = 1:(length(QIIn)-1)
+      runningsum = (QDIn(1,k)-DDat(1,k))'*(QDIn(1,k)-DDat(1,k))+(QIIn(1,k)-IDat(1,k))'*(QIIn(1,k)-IDat(1,k))+ runningsum;
+end
+
+CostVal = runningsum;
+end
+
+
+function Datas = DATA(QIn, xi, n)
+
+QData(:,1) = xi;
+
+for  k = 1:(n-1) % Combine these
+    QData(:,k+1) = QIn*QData(:,k);
+end
+
+Datas = QData;
+end
+
+
+function News = NEW(QIn, xi, n)
+
+QData(:,1) = xi;
+QNew(:,1) = xi;
+
+for  k = 1:(n-1)
+    QData(:,k+1) = QIn*QData(:,k);
+    QNew(:,k+1) = QData(:,k+1) - QData(:,k);
+end
+
+News = QNew;
+end
+
+
+function ICum = ICUM(DataMat, Mat21)
+
+ICumSum(1,1) = DataMat(2,1);
+
+for  k = 2:(length(DataMat))
+    ICumSum(1,k) = Mat21*DataMat(1,k-1) + ICumSum(1,k-1);
+end
+
+ICum = ICumSum;
+end
+
+
+function DCum = DCUM(DataMat, NewMat, Mat42)
+
+DCumSum = DataMat(4,:);
+
+DCum = DCumSum;
+end
+
+
+function IncomingT = TRAVEL(n)
+
+TBin = round(rand(1,n));
+
+for k = 1:158
+   
+    TSIRk(:,k) = zeros(3,1);
+
+    if TBin(1,k) == 1
+        TSIRk(:,k) = round((50/3)*rand(3,1));
+    end
+end
+
+TSIRDk = [TSIRk; zeros(1,n)];
+
+IncomingT = TSIRDk;
+
+end
+
+
+function Datas = MIXSIM(QIn, xi, n, TData)
+
+QData(:,1) = xi;
+
+for  k = 1:(n-1)
+    QData(:,k) = QData(:,k) + TData(:,k);
+    QData(:,k+1) = QIn*QData(:,k);
+end
+
+QData(:,n) = QData(:,n) + TData(:,n);
+
+Datas = QData;
+
+end
+
+
