@@ -1,0 +1,8 @@
+for i = 1:157
+    new_deaths(i+1) = deaths_STL(i+1)-deaths_STL(i);
+    new_deaths_percent(i) = new_deaths(i)/POP_STL;
+    deaths_percent(i) = deaths_STL(i)/POP_STL;
+    mockInfectionPercent(i) = newInfections/POP_STL;
+    mockDeathPercent(i)= cumulativeDeaths/POP_STL;
+    
+end
