@@ -1,0 +1,138 @@
+
+
+%% Part 2
+clear all
+close all
+
+load COVID_STL.mat
+load mockdata2023.mat
+
+new_cases(1) = cases_STL(1);
+new_deaths(1) = cases_STL(1);
+
+for i = 1:157
+    new_cases(i+1) =  cases_STL(i+1)-cases_STL(i);
+    new_cases_percent(i) = new_cases(i)/POP_STL;
+    infected_percent(i) = cases_STL(i)/POP_STL;
+end 
+%%
+%{
+for i = 1:157
+    new_deaths(i+1) = deaths_STL(i+1)-deaths_STL(i);
+    new_deaths_percent(i) = new_deaths(i)/POP_STL;
+    deaths_percent(i) = deaths_STL(i)/POP_STL;
+end
+%}
+%%
+
+for i = 1:400
+    mockInfectionPercent(i) = newInfections(i)/POP_STL;
+    mockDeathPercent(i)= cumulativeDeaths(i)/POP_STL;
+end
+
+%%
+
+
+%infected_percent(158) = cases_STL(158)/POP_STL;
+%deaths_percent(158) = deaths_STL(158)/POP_STL;
+
+%y = infected_percent;
+%z = deaths_percent;
+
+%%
+
+
+c = 0.005;
+d = 0.805;
+e = 0.15;
+f = 0.035;
+b = 1-d-e-f;
+a = 0.994;
+
+VI = 0.01;
+rowVV = 0.99;
+rowVS = 0.01;
+AfterD = 0.001;
+SSAfter = 0.9;
+
+VBefore = [a b 0 0 0; c d 0 0 0; 0 e 1 0 0; 0 f 0 1 0; rowVS 0 0 0 1];
+VAfter = [SSAfter b 0 0 0; c d 0 0 VI; 0 e 1 0 0; 0 AfterD 0 1 0; rowVS 0 0 0 rowVV];
+
+vaxday = 100;
+
+x0 = [1 0 0 0 0];
+
+n = 400;
+
+PlotSim = VAXSIM(VBefore, VAfter, x0', vaxday, n);
+
+
+figure
+hold on
+plot(PlotSim(2,:))
+plot(PlotSim(4,:))
+plot(cumulativeDeaths)
+plot(newInfections)
+
+legend('Simulated Infections', 'Simulated Deaths', 'Cumulative Deaths','New Infections')
+
+xlabel('Time')
+ylabel('Percentage Population');
+
+b = [0; 1; 0; 0; 0];
+
+%%
+BreakNew = zeros(1,n);
+
+for k = vaxday:n
+
+BreakNew(1,k) = VI*PlotSim(5,k-1);
+
+end
+
+
+vaxbreak = zeros(1,n);
+
+for k = vaxday:vaxday+14
+
+vaxbreak(k) = BreakNew(1,k-1) + vaxbreak(k-1);
+
+end
+
+
+for k = vaxday+14:n-1
+
+vaxbreak(k+1) = vaxbreak(k) + BreakNew(k+1) - BreakNew(1,k-14);
+
+end
+
+
+
+%%
+
+%Breakthroughs = VAXSIM(VBefore, VAfter, b, vaxday, n);
+
+vaxpop = PlotSim(5,:);
+
+%vaxbreak = Breakthroughs(2,:);
+
+
+
+
+
+
+function Datas = VAXSIM(SIRDVBin, SIRDVAin, xi, VaxDay, n)
+
+QData(:,1) = xi;
+
+for  k = 1:(VaxDay-1) % Combine these
+    QData(:,k+1) = SIRDVBin*QData(:,k);
+end
+
+
+for  k = VaxDay:n-1 % Combine these
+    QData(:,k+1) = SIRDVAin*QData(:,k);
+end
+
+Datas = QData;
+end
